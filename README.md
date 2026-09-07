@@ -17,9 +17,6 @@ Available at: https://ffc.herger.dev
 git clone https://github.com/AdamHerger/ffcvisualization.git
 ```
 ```
-cd .\frontend
-```
-```
 npm install
 ```
 ```
