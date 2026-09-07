@@ -4,7 +4,7 @@ The FFC visualization tool is a web-based, interactive, highly filterable force-
 
 Available at: https://ffc.herger.dev
 
-<img width="800" height="450" alt="toolgifopt" src="https://github.com/user-attachments/assets/2031005d-62cc-4125-b178-c070751a205b" />
+<img width="800" height="450" alt="toolgifopt-ezgif com-optimize" src="https://github.com/user-attachments/assets/9d455081-a34c-42a1-b0c6-081960a8ceed" />
 
 ## Built using
 
