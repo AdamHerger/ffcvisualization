@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import NodeTooltip from "./NodeTooltip";
+import CalculateCompositeScore from "./CalculateCompositeScore";
 
 function NodeGraph({
   data,
@@ -50,7 +51,10 @@ function NodeGraph({
       .range([minRadius, maxRadius]);
 
     const getValidValues = (d) => {
-      const val = d[colorAttribute];
+      const val =
+        colorAttribute === "compositescore"
+          ? CalculateCompositeScore(d, filters)
+          : d[colorAttribute];
       if (val == null) return [];
       const vals = Array.isArray(val) ? val : [val];
       return vals.filter((v) => v != null && v !== "NA" && v !== "");
@@ -64,16 +68,30 @@ function NodeGraph({
       ),
     ).sort();
 
-    const colorScale = d3
-      .scaleOrdinal(d3.interpolateRainbow)
-      .domain(uniqueVals)
-      .range(
-        uniqueVals.map((_, i) =>
-          d3.interpolateRainbow(
-            uniqueVals.length === 1 ? 0.5 : i / uniqueVals.length,
-          ),
-        ),
-      );
+    const isLog = ["budget", "grossusa", "openingusa", "grossworld"].includes(
+      colorAttribute,
+    );
+
+    const isNumeric = uniqueVals.every((v) => Number.isFinite(Number(v)));
+
+    const colorScale = isNumeric
+      ? isLog
+        ? d3
+            .scaleSequentialSqrt(d3.interpolateTurbo)
+            .domain(d3.extent(uniqueVals, Number).reverse())
+        : d3
+            .scaleSequential(d3.interpolateTurbo)
+            .domain(d3.extent(uniqueVals, Number).reverse())
+      : d3
+          .scaleOrdinal()
+          .domain(uniqueVals)
+          .range(
+            uniqueVals.map((_, i) =>
+              d3.interpolateRainbow(
+                uniqueVals.length === 1 ? 0.5 : i / uniqueVals.length,
+              ),
+            ),
+          );
 
     const arc = d3.arc().innerRadius(0);
     const pie = d3
@@ -182,11 +200,10 @@ function NodeGraph({
         if (vals.length === 0) {
           group.append("circle").attr("r", r).attr("fill", "#444444");
         } else if (vals.length === 1) {
-          const idx = uniqueVals.indexOf(vals[0]);
           group
             .append("circle")
             .attr("r", r)
-            .attr("fill", idx !== -1 ? colorScale(idx) : "#444444");
+            .attr("fill", colorScale(vals[0]) || "#444444");
         } else {
           arc.outerRadius(r);
           group

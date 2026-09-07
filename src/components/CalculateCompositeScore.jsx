@@ -47,7 +47,10 @@ function CalculateCompositeScore(film, filters) {
     const min = Number(filters[minFilter]);
     const max = Number(filters[maxFilter]);
 
-    if (!Number.isFinite(value) || value < 0 || weight <= 0) continue;
+    if (!Number.isFinite(value) || value < 0 || weight <= 0) {
+      totalWeight += weight;
+      continue;
+    }
 
     let normalized =
       norm === "linear"

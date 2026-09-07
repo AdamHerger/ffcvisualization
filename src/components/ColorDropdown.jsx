@@ -1,8 +1,11 @@
 import Select from "react-select";
 
-function ColorDropdown({ colorAttribute, setColorAttribute }) {
+function ColorDropdown({ colorAttribute, setColorAttribute, filters }) {
   const options = [
     { value: "default", label: "Default" },
+    ...(filters.isCompositeScoreActive
+      ? [{ value: "compositescore", label: "Composite Score" }]
+      : []),
     { value: "country", label: "Country" },
     { value: "region", label: "Region" },
     { value: "genres", label: "Genre" },
@@ -38,19 +41,14 @@ function ColorDropdown({ colorAttribute, setColorAttribute }) {
         styles={{
           control: (base) => ({
             ...base,
-            backgroundColor: "#FFFFFF",
-            borderColor: "#FFFFFF",
+            backgroundColor: "white",
+            borderColor: "white",
             color: "white",
             cursor: "pointer",
           }),
-          menu: (base) => ({
-            ...base,
-            backgroundColor: "#FFFFFF",
-          }),
           option: (base, { isFocused }) => ({
             ...base,
-            backgroundColor: isFocused ? "#dcecff" : "#FFFFFF",
-            color: "white",
+            backgroundColor: isFocused ? "#dcecff" : "white",
             cursor: "pointer",
           }),
           singleValue: (base) => ({

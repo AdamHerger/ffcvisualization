@@ -248,6 +248,7 @@ function Home() {
           <ColorDropdown
             colorAttribute={colorAttribute}
             setColorAttribute={setColorAttribute}
+            filters={filters}
           />
           <CompositeScore
             filters={filters}
