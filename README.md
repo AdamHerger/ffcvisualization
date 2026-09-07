@@ -27,4 +27,4 @@ npm run dev
 ```
 
 ## License
-MIT License [MIT LICENSE](LICENSE.md)
+MIT License [MIT LICENSE](https://github.com/AdamHerger/ffcvisualization/blob/main/LICENSE)
