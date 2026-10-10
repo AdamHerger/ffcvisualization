@@ -1,4 +1,5 @@
 import Select from "react-select";
+import InfoHover from "./InfoHover";
 
 function ColorDropdown({ colorAttribute, setColorAttribute, filters }) {
   const options = [
@@ -29,7 +30,12 @@ function ColorDropdown({ colorAttribute, setColorAttribute, filters }) {
 
   return (
     <div className="color-dropdown" style={{ marginBottom: "15px" }}>
-      <p>Color Nodes By</p>
+      <br />
+      <summary>
+        Color Nodes By
+        <InfoHover text="This filter allows you to color nodes depending on the chosen attribute. Categorical attributes are mapped to a rainbow gradient while numeric attributes are interpolated on a single blue color gradient. A gradient visualization will appear in the top left corner." />
+      </summary>{" "}
+      <br />
       <Select
         value={selectedOption}
         onChange={(selected) =>

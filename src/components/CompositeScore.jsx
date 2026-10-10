@@ -54,52 +54,62 @@ function CompositeScore({ filters, setFilters, data }) {
       </summary>
       <br />
 
-      <div className="compositescore-filters">
-        <label>Attribute - Weight - Type - (Target)</label>
+      <div className="compositescore-table">
+        <div className="composite-score-header">
+          <label className="attribute-column">Attribute</label>
+          <label className="weight-column">Weight</label>
+          <label className="type-column">Type</label>
+          <label className="target-column">Target</label>
+        </div>
+
         {numericAttributes.map(([attribute, minFilter, maxFilter]) => {
           const settings = filters.compositeScore.get(attribute);
-
           const min = filters[minFilter];
           const max = filters[maxFilter];
 
           return (
             <div className="composite-score-row" key={attribute}>
-              <label>
+              <label className="attribute-column">
                 {attribute.charAt(0).toUpperCase() + attribute.slice(1)}
               </label>
-
-              <input
-                className="compositescore-input"
-                type="number"
-                min="0"
-                max="100"
-                value={settings.weight}
-                onChange={(e) => handleWeightChange(attribute, e.target.value)}
-              />
-
-              <select
-                value={settings.preference}
-                onChange={(e) =>
-                  handlePreferenceChange(attribute, e.target.value)
-                }
-              >
-                <option value="min">Min</option>
-                <option value="target">Target</option>
-                <option value="max">Max</option>
-              </select>
-
-              {settings.preference === "target" && (
+              <div className="weight-column">
                 <input
-                  className="compositescore-target-input"
+                  className="compositescore-input"
                   type="number"
-                  min={min}
-                  max={max}
-                  value={settings.target ?? min}
+                  min="0"
+                  max="100"
+                  value={settings.weight}
                   onChange={(e) =>
-                    handleTargetChange(attribute, e.target.value)
+                    handleWeightChange(attribute, e.target.value)
                   }
                 />
-              )}
+              </div>
+              <div className="type-column">
+                <select
+                  value={settings.preference}
+                  onChange={(e) =>
+                    handlePreferenceChange(attribute, e.target.value)
+                  }
+                >
+                  <option value="min">Min</option>
+                  <option value="target">Target</option>
+                  <option value="max">Max</option>
+                </select>
+              </div>
+              <div className="target-column">
+                {settings.preference === "target" && (
+                  <input
+                    className="compositescore-target-input"
+                    type="number"
+                    min={min}
+                    max={max}
+                    value={settings.target ?? min}
+                    onChange={(e) =>
+                      handleTargetChange(attribute, e.target.value)
+                    }
+                  />
+                )}
+              </div>
             </div>
           );
         })}

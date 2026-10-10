@@ -7,6 +7,9 @@ import FilterFilms from "../components/FilterFilms";
 import SingleRangeSlider from "../components/SingleRangeSlider";
 import ColorDropdown from "../components/ColorDropdown";
 import CompositeScore from "../components/CompositeScore";
+import NodeSizeDropdown from "../components/NodeSizeDropdown";
+import CheckBoxFilter from "../components/CheckBoxFilter";
+import InfoHover from "../components/InfoHover";
 function Home() {
   // for github pages deployment
   const base = import.meta.env.BASE_URL;
@@ -19,10 +22,12 @@ function Home() {
   const [graph, setGraph] = useState(null);
   const [graphData, setGraphData] = useState(null);
   const [colorAttribute, setColorAttribute] = useState("default");
+  const [nodeSizeBy, setnodeSizeBy] = useState("connections");
 
   const [filters, setFilters] = useState({
     // film filters
     ANDOR: new Map(),
+    automaticFilters: false,
 
     documentaryOnly: false,
     fictOnly: false,
@@ -179,6 +184,10 @@ function Home() {
     });
   }, []);
 
+  useEffect(() => {
+    if (filters.automaticFilters) runSimulation();
+  }, [filters]);
+
   const runSimulation = () => {
     if (!graph) return;
     const filteredGraph = FilterFilms(graph, filters);
@@ -199,6 +208,7 @@ function Home() {
           repel={repel}
           attract={attract}
           colorAttribute={colorAttribute}
+          nodeSizeBy={nodeSizeBy}
           minNodeSize={minNodeSize}
           maxNodeSize={maxNodeSize}
           filters={filters}
@@ -245,6 +255,20 @@ function Home() {
               />
             </div>
           </div>
+          <br />
+          <div className="filter-box">
+            <CheckBoxFilter
+              label="Automatically apply Filters"
+              attribute="automaticFilters"
+              filters={filters}
+              setFilters={setFilters}
+            />
+          </div>
+          <NodeSizeDropdown
+            nodeSizeBy={nodeSizeBy}
+            setnodeSizeBy={setnodeSizeBy}
+            filters={filters}
+          />
           <ColorDropdown
             colorAttribute={colorAttribute}
             setColorAttribute={setColorAttribute}

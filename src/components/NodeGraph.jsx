@@ -3,11 +3,16 @@ import * as d3 from "d3";
 import NodeTooltip from "./NodeTooltip";
 import CalculateCompositeScore from "./CalculateCompositeScore";
 
+function roundToTwoDecimal(number) {
+  return Math.round(number * 100) / 100;
+}
+
 function NodeGraph({
   data,
   repel,
   attract,
   colorAttribute,
+  nodeSizeBy,
   minNodeSize,
   maxNodeSize,
   filters,
@@ -45,18 +50,69 @@ function NodeGraph({
       node.connections = connectionCount[node.id] || 0;
     });
 
-    const radiusScale = d3
-      .scaleLinear()
-      .domain(d3.extent(nodes, (d) => d.connections))
-      .range([minRadius, maxRadius]);
+    const getSizeValue = (d) => {
+      if (nodeSizeBy === "compositescore") {
+        return CalculateCompositeScore(d, filters);
+      }
+
+      return d[nodeSizeBy];
+    };
+
+    const sizeValues = nodes
+      .filter((d) => d.group === "film")
+      .map(getSizeValue)
+      .filter(
+        (v) =>
+          v != null &&
+          v >= 0 &&
+          v !== "NA" &&
+          v !== "" &&
+          Number.isFinite(Number(v)),
+      )
+      .map(Number);
+
+    const isLogSize = [
+      "budget",
+      "grossworld",
+      "grossusa",
+      "openingusa",
+    ].includes(nodeSizeBy);
+
+    const sizeScale =
+      sizeValues.length === 0
+        ? () => minRadius
+        : isLogSize
+          ? d3
+              .scaleSqrt()
+              .domain([Math.min(...sizeValues), Math.max(...sizeValues)])
+              .range([minRadius, maxRadius])
+              .clamp(true)
+          : d3
+              .scaleLinear()
+              .domain([Math.min(...sizeValues), Math.max(...sizeValues)])
+              .range([minRadius, maxRadius])
+              .clamp(true);
+
+    const radiusScale = (d) => {
+      const value = Number(getSizeValue(d));
+
+      if (!Number.isFinite(value)) {
+        return minRadius;
+      }
+
+      return sizeScale(value);
+    };
 
     const getValidValues = (d) => {
       const val =
         colorAttribute === "compositescore"
           ? CalculateCompositeScore(d, filters)
           : d[colorAttribute];
+
       if (val == null) return [];
+
       const vals = Array.isArray(val) ? val : [val];
+
       return vals.filter((v) => v != null && v !== "NA" && v !== "");
     };
 
@@ -68,20 +124,12 @@ function NodeGraph({
       ),
     ).sort();
 
-    const isLog = ["budget", "grossusa", "openingusa", "grossworld"].includes(
-      colorAttribute,
-    );
-
     const isNumeric = uniqueVals.every((v) => Number.isFinite(Number(v)));
 
     const colorScale = isNumeric
-      ? isLog
-        ? d3
-            .scaleSequentialSqrt(d3.interpolateTurbo)
-            .domain(d3.extent(uniqueVals, Number).reverse())
-        : d3
-            .scaleSequential(d3.interpolateTurbo)
-            .domain(d3.extent(uniqueVals, Number).reverse())
+      ? d3
+          .scaleSequential(d3.interpolateBlues)
+          .domain(d3.extent(uniqueVals, Number))
       : d3
           .scaleOrdinal()
           .domain(uniqueVals)
@@ -119,7 +167,7 @@ function NodeGraph({
       setSelectedNode(null);
       currentSelectedNode = null;
       node.each(function (d) {
-        const r = radiusScale(d.connections);
+        const r = radiusScale(d);
         arc.outerRadius(r);
         d3.select(this)
           .selectAll("circle")
@@ -148,7 +196,7 @@ function NodeGraph({
       .force("center", d3.forceCenter(width / 2, height / 2).strength(0.2))
       .force(
         "collision",
-        d3.forceCollide((d) => radiusScale(d.connections) + attractForce),
+        d3.forceCollide((d) => radiusScale(d) + attractForce),
       )
       .force(
         "link",
@@ -157,6 +205,90 @@ function NodeGraph({
           .id((d) => d.id)
           .distance(150),
       );
+
+    // color gradient display logic
+    const legend = svg
+      .append("g")
+      .attr("class", "color-legend")
+      .attr("transform", "translate(20, 20)");
+
+    const defs = svg.append("defs");
+
+    const gradient = defs
+      .append("linearGradient")
+      .attr("id", "color-gradient")
+      .attr("x1", "0%")
+      .attr("x2", "100%")
+      .attr("y1", "0%")
+      .attr("y2", "0%");
+
+    if (isNumeric) {
+      const [min, max] = d3.extent(uniqueVals, Number);
+
+      d3.range(0, 1.01, 0.1).forEach((t) => {
+        const value = min + (max - min) * t;
+
+        gradient
+          .append("stop")
+          .attr("offset", `${t * 100}%`)
+          .attr("stop-color", colorScale(value));
+      });
+    } else {
+      uniqueVals.forEach((value, i) => {
+        const t = uniqueVals.length === 1 ? 0.5 : i / (uniqueVals.length - 1);
+
+        gradient
+          .append("stop")
+          .attr("offset", `${t * 100}%`)
+          .attr("stop-color", colorScale(value));
+      });
+    }
+    if (colorAttribute !== "default") {
+      legend
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", 260)
+        .attr("height", 30)
+        .attr("fill", "url(#color-gradient)");
+    }
+
+    if (isNumeric && colorAttribute !== "default") {
+      const [min, max] = d3.extent(uniqueVals, Number);
+
+      legend
+        .append("text")
+        .attr("x", 0)
+        .attr("y", 48)
+        .attr("text-anchor", "start")
+        .attr("fill", "white")
+        .text((d) =>
+          min >= 10000
+            ? roundToTwoDecimal(min).toLocaleString("en-US", {
+                style: "currency",
+                currency: "USD",
+              })
+            : min <= 0
+              ? 0
+              : roundToTwoDecimal(min),
+        );
+      legend
+        .append("text")
+        .attr("x", 260)
+        .attr("y", 48)
+        .attr("text-anchor", "end")
+        .attr("fill", "white")
+        .text((d) =>
+          max >= 10000
+            ? roundToTwoDecimal(max).toLocaleString("en-US", {
+                style: "currency",
+                currency: "USD",
+              })
+            : max <= 0
+              ? 0
+              : roundToTwoDecimal(max),
+        );
+    }
 
     const link = graph
       .append("g")
@@ -180,7 +312,7 @@ function NodeGraph({
       .style("cursor", "pointer")
       .each(function (d) {
         const group = d3.select(this);
-        const r = radiusScale(d.connections);
+        const r = radiusScale(d);
 
         if (colorAttribute === "default") {
           group
@@ -191,7 +323,7 @@ function NodeGraph({
         }
 
         if (d.group === "festival") {
-          group.append("circle").attr("r", r).attr("fill", "white");
+          group.append("circle").attr("r", r).attr("fill", "#3f3f3f");
           return;
         }
 
@@ -216,7 +348,7 @@ function NodeGraph({
       })
       .on("mouseover", function (event, d) {
         setHoveredNode(d);
-        const r = radiusScale(d.connections) * 1.2;
+        const r = radiusScale(d) * 1.2;
         arc.outerRadius(r);
         d3.select(this)
           .selectAll("circle")
@@ -233,7 +365,7 @@ function NodeGraph({
         setHoveredNode(null);
 
         if (currentSelectedNode !== d) {
-          const r = radiusScale(d.connections);
+          const r = radiusScale(d);
           arc.outerRadius(r);
           d3.select(this)
             .selectAll("circle")
@@ -256,8 +388,8 @@ function NodeGraph({
         node.each(function (nodeData) {
           const r =
             nodeData.id === d.id
-              ? radiusScale(nodeData.connections) * 1.2
-              : radiusScale(nodeData.connections);
+              ? radiusScale(nodeData) * 1.2
+              : radiusScale(nodeData);
           arc.outerRadius(r);
           d3.select(this)
             .selectAll("circle")
@@ -279,7 +411,7 @@ function NodeGraph({
           );
       });
 
-    node.append("title").text((d) => d.id);
+    node.append("title").text((d) => (d.title ? d.title : d.label));
 
     simulation.on("tick", () => {
       link
@@ -294,7 +426,7 @@ function NodeGraph({
     setTimeout(() => simulation.stop(), 10000);
 
     return () => simulation.stop();
-  }, [data, colorAttribute]);
+  }, [data, colorAttribute, nodeSizeBy, minNodeSize, maxNodeSize]);
 
   return (
     <div className="graph-container">

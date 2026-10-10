@@ -340,3 +340,45 @@
   }
   background-color: rgb(153, 156, 161);
 }
+.compositescore-table {
+  border: 1px solid white;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.composite-score-header,
+.composite-score-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.composite-score-header {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid white;
+}
+
+.composite-score-row {
+  margin-bottom: 8px;
+}
+
+.attribute-column {
+  color: white;
+  display: flex;
+}
+
+.weight-column {
+  color: #df4d4d;
+  display: flex;
+}
+
+.type-column {
+  color: #227cd1;
+  display: flex;
+}
+
+.target-column {
+  color: #2db857;
+  display: flex;
+}
