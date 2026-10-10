@@ -27,6 +27,7 @@ function Home() {
   const [filters, setFilters] = useState({
     // film filters
     ANDOR: new Map(),
+    // automatically restarts simulation on filter change
     automaticFilters: false,
 
     documentaryOnly: false,
