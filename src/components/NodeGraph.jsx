@@ -124,12 +124,23 @@ function NodeGraph({
       ),
     ).sort();
 
+    const isLogColor = [
+      "budget",
+      "grossworld",
+      "grossusa",
+      "openingusa",
+    ].includes(colorAttribute);
+
     const isNumeric = uniqueVals.every((v) => Number.isFinite(Number(v)));
 
     const colorScale = isNumeric
-      ? d3
-          .scaleSequential(d3.interpolateBlues)
-          .domain(d3.extent(uniqueVals, Number))
+      ? isLogColor
+        ? d3
+            .scaleSequentialSymlog(d3.interpolateBlues)
+            .domain(d3.extent(uniqueVals, Number))
+        : d3
+            .scaleSequential(d3.interpolateBlues)
+            .domain(d3.extent(uniqueVals, Number))
       : d3
           .scaleOrdinal()
           .domain(uniqueVals)
